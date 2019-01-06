@@ -12,7 +12,6 @@ import (
 func NewFrameHandler(w http.ResponseWriter, r *http.Request) {
 	fileId := r.URL.Query().Get("fileId")
 	t := r.URL.Query().Get("t")
-	fmt.Println(t)
 	time := 30
 	if tint, err := strconv.Atoi(t); err == nil {
 		time = tint

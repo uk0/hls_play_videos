@@ -1,7 +1,6 @@
 package hls
 
 import (
-	"fmt"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 	"net/http"
@@ -35,11 +34,7 @@ func NewStreamHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	res := int64(720)
 	segment, _ := strconv.ParseInt(matches[2], 0, 64)
-	fmt.Println(segment)
 	file := localPath2+fileId
-	fmt.Println(file)
-	fmt.Println(matches[1])
-	fmt.Println(matches[2])
 	er := NewEncodingRequest(file, segment, res)
 	NewEncoder("segments", 2).Encode(*er)
 

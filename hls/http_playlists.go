@@ -15,7 +15,6 @@ type PlaylistHandler struct {
 func NewPlaylistHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	fileId := vars["fileId"];
-	fmt.Println(fileId)
 	log.Debugf("Playlist request: %v", r.URL.Path)
 
 	vinfo, err := GetVideoInformation(localPath+fileId)
