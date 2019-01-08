@@ -3,7 +3,6 @@ package tools
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -102,7 +101,7 @@ func GetFile(url string) {
 	res, _ := http.DefaultClient.Do(req)
 
 	defer res.Body.Close()
-	body, _ := ioutil.ReadAll(res.Body)
+	//body, _ := ioutil.ReadAll(res.Body)
 
 }
 

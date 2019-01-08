@@ -11,7 +11,7 @@ services:
     - ./weedfs/master:/data
   volume1:
     image: chrislusf/seaweedfs # use a remote image
-    command: 'volume -max=15 -mserver="master:9333" -port=8080'
+    command: 'volume -max=3 -mserver="master:9333" -port=8080'
     # 文件映射，左边本地右边容器内，多volume需要分开这个
     volumes:
     - ./weedfs/volume1:/data
@@ -19,7 +19,7 @@ services:
     - master
   volume2:
     image: chrislusf/seaweedfs # use a remote image
-    command: 'volume -max=15 -mserver="master:9333" -port=8080'
+    command: 'volume -max=3 -mserver="master:9333" -port=8080'
     # 文件映射，左边本地右边容器内，多volume需要分开这个
     volumes:
     - ./weedfs/volume2:/data
@@ -27,7 +27,7 @@ services:
     - master
   volume3:
     image: chrislusf/seaweedfs # use a remote image
-    command: 'volume -max=15 -mserver="master:9333" -port=8080'
+    command: 'volume -max=3 -mserver="master:9333" -port=8080'
     # 文件映射，左边本地右边容器内，多volume需要分开这个
     volumes:
     - ./weedfs/volume3:/data
