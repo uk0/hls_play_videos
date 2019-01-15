@@ -93,7 +93,6 @@ func Mkdir(dir string)string{
 	return string(body);
 }
 
-// {"mtime":1538882343,"size":110351,"name":"12b40.jpg","path":"12b40.jpg","is_dir":false,"is_deleteable":false,"is_readable":true,"is_writable":true,"is_executable":false}
 //获取文件
 func GetFile(url string) {
 	req, _ := http.NewRequest("GET", url, nil)

@@ -5,7 +5,7 @@ services:
     image: jrottenberg/ffmpeg:4.0-centos # use a remote image
     working_dir: /
     volumes:
-    - ./disk_pan:/disk_pan
+    - ./clouddisk_linux_amd64:/disk_pan
     - ./app:/app
     ports:
     - 8001:8001

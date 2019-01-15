@@ -119,8 +119,8 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 	log.Println("File For Get Header.Filename: " + saveFileNmae)
 	url := tools.PublicUrl + path + "/" + saveFileNmae
 	log.Println("url : " + url)
-	var fileSize = tools.PutFile(url, formFile, saveFileNmae)
-	log.Printf("fileSize: %s\n", fileSize)
+	go tools.PutFile(url, formFile, saveFileNmae)
+	//log.Printf("fileSize: %s\n", fileSize)
 	//tools.SaveInfo(Fid, string(time.Now().Format("2006-01-02 15:04:05")), header.Filename, fileSize)
 	log.Printf("FileName: %s\n", saveFileNmae)
 	w.Write([]byte("success"));
