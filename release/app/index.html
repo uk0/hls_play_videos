@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="http://www.jq22.com/jquery/jquery-3.3.1.js"></script>
+    <script src="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="/static/style.css"/>
+    <script src="/static/jquery-translucent.js"></script>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+    <link href="https://unpkg.com/video.js/dist/video-js.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="/static/base.css"/>
+    <script src="https://unpkg.com/video.js@7.4.1/dist/video.js"></script>
+    <script src="https://unpkg.com/videojs-flash/dist/videojs-flash.js"></script>
+    <script src="https://unpkg.com/videojs-contrib-hls@5.15.0/dist/videojs-contrib-hls.js"></script>
+
+    <meta charset="UTF-8">
+    <title>简易网盘</title>
+
+
+    <script>
+
+        function escapeHtml(string) {
+            var entityMap = {
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                '"': '&quot;',
+                "'": '&#39;',
+                "/": '&#x2F;'
+            };
+            return String(string).replace(/[\r\n]/g, function (s) {
+                return entityMap[s];
+            });
+        }
+
+        function showMods(fileId) {
+            var out = escapeHtml(fileId);
+            console.log(`${fileId}`)
+            $("#body").translucent({
+                titleGroundColor: "rgb(31, 117, 204)",
+                backgroundColor: "#ffffff",
+                titleFontColor: "#ffffff",
+                titleFontSize: 14,
+                titleText: "视频播放",
+                opacity: 1,
+                zIndex: 100,
+                textHtml: '<video id=example-video class="video-js vjs-default-skin" controls></video>',
+                close: function ($dom) {
+                    var r = confirm("关闭视频窗口!");
+                    if (r == true) {
+                        window.location.reload(true)
+                    }
+                    else {
+                        $dom.close()
+                    }
+                }
+            });
+            var player = videojs('example-video');
+            player.src({
+                src: '/playlist' + out,
+                type: 'application/x-mpegURL',
+            });
+            return this;
+        }
+
+        (function ($) {
+            $.fn.tablesorter = function () {
+                var $table = this;
+                this.find('th').click(function () {
+                    var idx = $(this).index();
+                    var direction = $(this).hasClass('sort_asc');
+                    $table.tablesortby(idx, direction);
+                });
+                return this;
+            };
+            $.fn.tablesortby = function (idx, direction) {
+                var $rows = this.find('tbody tr');
+
+                function elementToVal(a) {
+                    var $a_elem = $(a).find('td:nth-child(' + (idx + 1) + ')');
+                    var a_val = $a_elem.attr('data-sort') || $a_elem.text();
+                    return (a_val == parseInt(a_val) ? parseInt(a_val) : a_val);
+                }
+
+                $rows.sort(function (a, b) {
+                    var a_val = elementToVal(a), b_val = elementToVal(b);
+                    return (a_val > b_val ? 1 : (a_val == b_val ? 0 : -1)) * (direction ? 1 : -1);
+                })
+                this.find('th').removeClass('sort_asc sort_desc');
+                $(this).find('thead th:nth-child(' + (idx + 1) + ')').addClass(direction ? 'sort_desc' : 'sort_asc');
+                for (var i = 0; i < $rows.length; i++)
+                    this.append($rows[i]);
+                this.settablesortmarkers();
+                return this;
+            }
+            $.fn.retablesort = function () {
+                var $e = this.find('thead th.sort_asc, thead th.sort_desc');
+                if ($e.length)
+                    this.tablesortby($e.index(), $e.hasClass('sort_desc'));
+
+                return this;
+            }
+            $.fn.settablesortmarkers = function () {
+                this.find('thead th span.indicator').remove();
+                this.find('thead th.sort_asc').append('<span class="indicator">&darr;<span>');
+                this.find('thead th.sort_desc').append('<span class="indicator">&uarr;<span>');
+                return this;
+            }
+        })(jQuery);
+        $(function () {
+            var MAX_UPLOAD_SIZE = 10485760000;
+            var $tbody = $('#list');
+            $(window).bind('hashchange', list).trigger('hashchange');
+            $('#table').tablesorter();
+
+            $('#mkdir').submit(function (e) {
+                $dir = $(this).find('[name=name]');
+                e.preventDefault();
+                $dir.val().length && $.get('/mkdir', {'dir': '/' + $dir.val()}, function (data) {
+                    console.log(data)
+                    list("/");
+                }, 'json');
+                $dir.val('');
+                return false;
+            });
+            // file upload stuff
+            $('#file_drop_target').bind('dragover', function () {
+                $(this).addClass('drag_over');
+                return false;
+            }).bind('dragend', function () {
+                $(this).removeClass('drag_over');
+                return false;
+            }).bind('drop', function (e) {
+                e.preventDefault();
+                var files = e.originalEvent.dataTransfer.files;
+                $.each(files, function (k, file) {
+                    uploadFile(file);
+                });
+                $(this).removeClass('drag_over');
+            });
+            $('input[type=file]').change(function (e) {
+                e.preventDefault();
+                $.each(this.files, function (k, file) {
+                    uploadFile(file);
+                });
+            });
+
+
+            function uploadFile(file) {
+                var folder = window.location.hash.substr(1);
+
+                if (file.size > MAX_UPLOAD_SIZE) {
+                    var $error_row = renderFileSizeErrorRow(file, folder);
+                    $('#upload_progress').append($error_row);
+                    window.setTimeout(function () {
+                        $error_row.fadeOut();
+                    }, 5000);
+                    return false;
+                }
+
+                var $row = renderFileUploadRow(file, folder);
+                $('#upload_progress').append($row);
+                var fd = new FormData();
+                fd.append('uploadfile', file);
+                var xhr = new XMLHttpRequest();
+                xhr.open('POST', '/uploadFile?dir=' + folder);
+                xhr.onload = function () {
+                    $row.remove();
+                    list("/");
+                };
+                xhr.upload.onprogress = function (e) {
+                    if (e.lengthComputable) {
+                        $row.find('.progress').css('width', (e.loaded / e.total * 100 | 0) + '%');
+                    }
+                };
+                xhr.send(fd);
+            }
+
+            function renderFileUploadRow(file, folder) {
+                return $row = $('<div/>')
+                        .append($('<span class="fileuploadname" />').text((folder ? folder + '/' : '') + file.name))
+                        .append($('<div class="progress_track"><div class="progress"></div></div>'))
+                        .append($('<span class="size" />').text(formatFileSize(file.size)))
+            };
+
+            function renderFileSizeErrorRow(file, folder) {
+                return $row = $('<div class="error" />')
+                        .append($('<span class="fileuploadname" />').text('Error: ' + (folder ? folder + '/' : '') + file.name))
+                        .append($('<span/>').html(' file size - <b>' + formatFileSize(file.size) + '</b>'
+                                + ' exceeds max upload size of <b>' + formatFileSize(MAX_UPLOAD_SIZE) + '</b>'));
+            }
+
+            function list(path) {
+                var hashval = window.location.hash.substr(1); //fix
+                $.get('/getdirs', {'dir': hashval}, function (data) {
+                    $tbody.empty();
+                    $('#breadcrumb').empty().html(renderBreadcrumbs(hashval));
+                    if (data.Entries) {
+                        $.each(data.Entries, function (k, v) {
+                            $tbody.append(renderFileRow(v));
+                        });
+                        !data.Entries.length && $tbody.append('<tr><td class="empty" colspan=5>这个目录是空的</td></tr>')
+                    } else {
+                        console.warn(data);
+                    }
+                    $('#table').retablesort();
+                }, 'json');
+            }
+
+            function renderFileRow(data) {
+                var $link = $('<a class="name" />')
+                        .attr('href', data.chunks == null ? '#' + data.FullPath : './getFiles?fid=' + data.FullPath)
+                        .text(data.FullPath);
+                var allow_direct_link = true;
+                if (data.chunks != null && !allow_direct_link) $link.css('pointer-events', 'none');
+                var $html = $('<tr />')
+                        .addClass(data.chunks == null ? 'is_dir' : '')
+                        .append($('<td class="first" />').append($link))
+                        .append($('<td/>').attr('data-sort', data.chunks != null ? -1 : data.size)
+                                .html($('<span class="size" />').text(formatFileSize(data.size))))
+                        .append($('<td/>').attr('data-sort', data.Mtime).text(data.Mtime))
+                        .append($('<td/>')
+                                .append(data.FullPath.indexOf(".mp4") == -1 ? "不支持" : $(`<input type="button" class="btn btn-primary" onclick='showMods("${data.FullPath}")' value="播放">`)))
+
+                        .append(data.FullPath.indexOf(".mp4") == -1 ? "不支持" :$('<td/>').append(`<img src="/frame?fileId=${data.FullPath}&t=${Math.ceil((Math.random()*100)+1)}"><img>`))
+                return $html;
+            }
+
+            function renderBreadcrumbs(path) {
+                var base = "",
+                        $html = $('<div/>').append($('<a href=#>Home</a></div>'));
+                $.each(path.split('/'), function (k, v) {
+                    if (v) {
+                        $html.append($('<span/>').text(' ▸ '))
+                                .append($('<a/>').attr('href', '#' + base + v).text(v));
+                        base += v + '/';
+                    }
+                });
+                return $html;
+            }
+
+            function formatFileSize(bytes) {
+                var s = ['bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB'];
+                for (var pos = 0; bytes >= 1000; pos++, bytes /= 1024) ;
+                var d = Math.round(bytes * 10);
+                return pos ? [parseInt(d / 10), ".", d % 10, " ", s[pos]].join('') : bytes + ' bytes';
+            }
+
+            $('table').tablesortby(2, false);
+        })
+
+    </script>
+</head>
+<body id="body">
+<div id="top">
+    <form action="?" method="post" id="mkdir">
+        <label for="dirname">创建新目录</label><input id="dirname" type="text" name="name" value="">
+        <input type="submit" value="MKDIR">
+    </form>
+
+
+    <div id="file_drop_target">
+        拖入文件到这里
+        <b>或者</b>
+        <input type="file" multiple="">
+    </div>
+    <div id="breadcrumb">
+        <div><a href="#">Home</a></div>
+    </div>
+    <div id="upload_progress"></div>
+</div>
+
+<table id="table">
+    <thead>
+    <tr>
+        <th>文件名</th>
+        <th>大小</th>
+        <th class="sort_asc">修改日期<span class="indicator">↓<span></span></span></th>
+        <th>播放(HLS)</th>
+        <th>缩略图</th>
+        <!--<th>执行</th>-->
+    </tr>
+    </thead>
+    <tbody id="list">
+    </tbody>
+</table>
+</body>
+</html>

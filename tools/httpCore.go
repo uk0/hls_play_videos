@@ -10,10 +10,10 @@ import (
 	"net/http"
 )
 
-var MasterUrl = "http://localhost:9333";
+var MasterUrl = "http://master:9333";
 
 
-var PublicUrl = "http://localhost:8888";
+var PublicUrl = "http://filer:8888";
 
 func GetFid(t string) string {
 	var x Data
@@ -80,7 +80,7 @@ func GetBlokInfo() string {
 }
 
 func Mkdir(dir string)string{
-	url := "http://localhost:8888"+dir+"/root"
+	url := "http://filer:8888"+dir+"/root"
 
 	req, _ := http.NewRequest("POST", url, nil)
 
@@ -117,7 +117,7 @@ func GetFileByFid(Fid string) []byte {
 }
 
 func GetDirs(path string) Paths {
-	url := "http://127.0.0.1:8888"+path+"?&pretty=y"
+	url := "http://filer:8888"+path+"?&pretty=y"
 	req, _ := http.NewRequest("GET", url, nil)
 	req.Header.Add("accept", "application/json")
 	res, _ := http.DefaultClient.Do(req)

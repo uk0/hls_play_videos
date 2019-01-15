@@ -9,7 +9,7 @@ var HomeDir = ".hls_cache"
 var FFProbePath = "ffprobe"
 var FFMPEGPath = "ffmpeg"
 var segmentsPath = "/segments/"
-var localPath = "http://127.0.0.1:8888/";
+var localPath = "http://filer:8888/";
 
 const cacheDirName = "cache"
 const hlsSegmentLength = 5.0 // Seconds

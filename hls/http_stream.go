@@ -10,7 +10,7 @@ import (
 )
 
 var streamRegexp = regexp.MustCompile(`^(.*)/([0-9]+)\.ts$`)
-var localPath2 = "http://127.0.0.1:8888/";
+var localPath2 = "http://filer:8888/";
 type StreamHandler struct {
 	root    string
 	rootUri string

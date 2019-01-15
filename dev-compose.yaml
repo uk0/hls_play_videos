@@ -1,10 +1,20 @@
 version: '2'
 
 services:
+  diskpan:
+    image: jrottenberg/ffmpeg:4.0-centos # use a remote image
+    working_dir: /
+    volumes:
+    - ./disk_pan:/disk_pan
+    - ./app:/app
+    ports:
+    - 8001:8001
+    entrypoint: './disk_pan'
+    command: 'ls'
   master:
     image: chrislusf/seaweedfs # use a remote image
-    ports:
-    - 9333:9333
+#    ports:
+#    - 9333:9333
     command: "master"
     # 文件映射，左边本地右边容器内
     volumes:
@@ -35,9 +45,9 @@ services:
     - master
   filer:
     image: chrislusf/seaweedfs # use a remote image
-    ports:
-    - 8888:8888
-    - 18888:18888
+#    ports:
+#    - 8888:8888
+#    - 18888:18888
     command: 'filer -master="master:9333"'
     tty: true
     stdin_open: true
@@ -46,3 +56,4 @@ services:
     - volume1
     - volume2
     - volume3
+    - diskpan
